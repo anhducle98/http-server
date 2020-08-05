@@ -69,7 +69,9 @@ std::map<std::string, std::string> HttpResponse::EXT_TO_MIME = {
 	{"json", "application/json"},
 	{"css", "text/css"},
 	{"pdf", "application/pdf"},
-	{"ico", "image/vnd.microsoft.icon"}
+	{"ico", "image/vnd.microsoft.icon"},
+	{"mp3", "audio/mpeg"},
+	{"mp4", "video/mp4"}
 };
 
 #endif // HTTP_RESPONSE_HPP
