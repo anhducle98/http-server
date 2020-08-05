@@ -7,12 +7,14 @@
 
 #include <sys/epoll.h>
 #include <arpa/inet.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
+#include <signal.h>
 
 #include "request_handler.hpp"
 
 class Server {
-	static const int NUM_EPOLL_FD = 2048;
+	static const int NUM_EPOLL_FD = 10000;
 	static const int EPOLL_TIMEOUT = 1000;
 	int port;
 	int backlog;
@@ -23,8 +25,9 @@ class Server {
 	std::vector<int> epoll_fds;
 
 	static void kill_connection(int epfd, RequestHandler *handler) {
-		//fprintf(stderr, "kill_connection epfd=%d, fd=%d\n", epfd, handler->fd);
+		// fprintf(stderr, "kill_connection epfd=%d, fd=%d\n", epfd, handler->fd);
 		epoll_ctl(epfd, EPOLL_CTL_DEL, handler->fd, NULL);
+		shutdown(handler->fd, SHUT_RDWR);
 		close(handler->fd);
 		delete handler;
 	}
@@ -98,6 +101,11 @@ class Server {
 				return -1;
 			}
 
+			if (setsockopt(sockfd, IPPROTO_TCP, TCP_QUICKACK, &yes, sizeof(int)) < 0) {
+				perror("setsockopt");
+				return -1;
+			}
+
 			if (bind(sockfd, p->ai_addr, p->ai_addrlen) < 0) {
 				perror("bind");
 				close(sockfd);
@@ -143,10 +151,13 @@ public:
 	int run() {
         printf("root dir = \"%s\"\n", root.c_str());
         printf("port = %d\n", port);
+		printf("backlog = %d\n", backlog);
 		printf("num_workers = %d\n", num_workers);
 
 		int sockfd = setup_sockfd();
 		if (sockfd < 0) return -1;
+
+		signal(SIGPIPE, SIG_IGN); // ignore SIGPIPE
 
 		if (listen(sockfd, backlog) < 0) {
 			perror("listen");
@@ -188,7 +199,7 @@ public:
 		return 0;
 	}
 
-    Server(const std::string &root, int port, int num_workers, int backlog = 10000) {
+    Server(const std::string &root, int port, int num_workers, int backlog = SOMAXCONN) {
 		this->port = port;
 		this->backlog = backlog;
 		this->root = root;
