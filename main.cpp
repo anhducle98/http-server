@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
     int num_workers = 2;
 
     int opt;
-    while ((opt = getopt(argc, argv, "p:f:n:")) != -1) {
+    while ((opt = getopt(argc, argv, "p:f:n:h")) != -1) {
         switch (opt) {
             case 'p':
                 port = atoi(optarg);

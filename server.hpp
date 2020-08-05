@@ -54,7 +54,6 @@ class Server {
 					}
 				} else if (events[i].events & EPOLLOUT) {
 					int status = handler->handle_response();
-                    // fprintf(stderr, "handle_response status=%d\n", status);
 					if (status < 0 || !handler->keep_alive()) {
 						kill_connection(epfd, handler);
 					} else {
@@ -186,7 +185,7 @@ public:
 				continue;
 			}
 
-			print_client_addr(client_addr);
+			// print_client_addr(client_addr);
 
 			make_non_block(cur_fd);
 			epoll_event ev;

@@ -26,7 +26,6 @@ class RequestHandler {
 
 	int do_recv() {
 		int num_read = recv(fd, buffer, BUFFER_SIZE, 0);
-		//fprintf(stderr, "num_read=%d\n", num_read);
 		if (num_read == 0 || (num_read < 0 && errno != EAGAIN && errno != EWOULDBLOCK)) {
 			return -1;
 		}
@@ -49,7 +48,6 @@ class RequestHandler {
 	}
 
 	int do_send_file(int file_fd, size_t file_size) {
-		// fprintf(stderr, "do_send_file file_fd=%d size=%d\n", file_fd, file_size);
 		size_t n = file_size;
 		while (n > 0) {
 			int num_sent = sendfile(fd, file_fd, NULL, n); // done in kernel
@@ -59,14 +57,12 @@ class RequestHandler {
 			if (num_sent < 0) return -1;
 			n -= num_sent;
 		}
-		//fprintf(stderr, "done send_file fd=%d\n", fd);
 		return 0;
 	}
 
 	int do_send(const HttpResponse &response, int file_fd, size_t file_size) {
 		int status = 0;
 		std::string response_header = response.to_string();
-		//fprintf(stderr, "response_header=\n%s", response_header.c_str());
 		status = do_send_header(response_header);
 		if (status == 0 && file_fd != -1) {
 			status = do_send_file(file_fd, file_size);
@@ -89,10 +85,7 @@ public:
     int fd;
 
     int handle_request() {
-		//fprintf(stderr, "handle_request start fd=%d\n", fd);
 		if (do_recv() < 0) return -1;
-
-		//fprintf(stderr, "done do_recv for fd=%d\n", fd);
 
 		size_t end_of_header = message.find("\r\n\r\n");
 		if (end_of_header == std::string::npos) {
@@ -105,13 +98,10 @@ public:
 		request = HttpRequest();
 		request.parse(request_header);
 
-        //fprintf(stderr, "handle_request done, fd=%d\n", fd);
-
 		return 0;
 	}
 
 	int handle_response() {
-		//fprintf(stderr, "handle_response start, fd=%d\n", fd);
 		response = HttpResponse();
 		response.append_header("Server", "BasicServer");
 		response.set_code(200);
@@ -125,13 +115,9 @@ public:
 			// now handle GET
 			std::string file_path = root + request.uri;
 			if (file_path.back() == '/') file_path += "index.html";
-			// fprintf(stderr, "file_path=%s\n", file_path.c_str());
 			int file_fd = open(file_path.c_str(), O_RDONLY);
 
-			//fprintf(stderr, "file_fd=%d\n", file_fd);
-
 			if (file_fd < 0) {
-				//fprintf(stderr, "errno=%d, EACCES=%d, ENOENT%d\n", errno, EACCES, ENOENT);
 				if (errno == EACCES) {
 					response.set_code(403);
 				} else if (errno == ENOENT) {
@@ -146,7 +132,6 @@ public:
 					response.set_code(500);
 				} else {
 					// success
-					// response.append_header("Last-Modified", to_date(file_stat.st_mtime));
 					if (request.keep_alive) {
 						response.append_header("Connection", "Keep-Alive");
 					}
