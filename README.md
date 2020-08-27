@@ -1,6 +1,4 @@
-# Basic HTTP server project description
-
-This is a very basic HTTP server.
+# Basic HTTP server
 
 ### Features:
 * Support HTTP GET method
